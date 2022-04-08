@@ -55,7 +55,8 @@ Imports:
     tufte,
     tweetrmd,
     workflowsets,
-    probably
+    probably,
+    naniar
 Remotes: 
     hadley/emo,
     gadenbuie/tweetrmd,

@@ -19,8 +19,12 @@ library(tidymodels)
 library(palmerpenguins)
 library(patchwork)
 library(finetune)
+library(naniar)
+library(tictoc)
 ```
 ```{r 14-data-setup}
+miss_var_summary(penguins)
+
 penguins_df <- penguins %>%
   filter(!is.na(sex)) %>% # discarding NA obs
   select(-year, -island) # not useful
@@ -67,7 +71,7 @@ We can change them:
 ```{r 14-svm_param, message = F, warning = F}
 svm_param <- 
   svm_wflow %>% 
-  parameters() %>% 
+  hardhat::extract_parameter_set_dials() %>% 
   update(rbf_sigma = rbf_sigma(c(-7, -1)))
 ```
 
@@ -199,8 +203,9 @@ Let's keep going with our SVM model. We can use the earlier SVM results as the i
 ```{r 14-tune, eval = FALSE}
 ctrl <- control_bayes(verbose = TRUE) # can also add more arguments, like no_improve
 
+system.time({ 
+tic("bayes iterations")
 set.seed(420)
-
 svm_bo <-
   svm_wflow %>%
   tune_bayes(
@@ -211,6 +216,9 @@ svm_bo <-
     iter = 25, # maximum number of search iterations
     control = ctrl
   )
+toc()
+ })
+
 ```
 ```{r 14-save-tune, include = FALSE, eval = FALSE}
 saveRDS(svm_bo, here::here("data", "14-svm_bo.rds"))
@@ -302,8 +310,8 @@ Implemention is very similar to grid search and Bayesian optimization. We can pr
 ```{r 14-sim-anneal, eval = FALSE}
 ctrl_sa <- control_sim_anneal(verbose = TRUE, no_improve = 10L)
 
+system.time({ 
 set.seed(1234)
-
 svm_sa <-
   svm_wflow %>%
   tune_sim_anneal(
@@ -314,6 +322,8 @@ svm_sa <-
     iter = 50,
     control = ctrl_sa
   )
+})
+
 ```
 ```{r 14-save-sim-anneal, include = FALSE, eval = FALSE}
 saveRDS(svm_sa, here::here("data", "14-svm_sa.rds"))
@@ -327,6 +337,18 @@ show_best(svm_sa)
 
 Voilààà!
 
+## Compared
+
+Bayes saw 0.975 roc_auc, same as simulated annealing.
+
+Bayes, 25 iterations    
+
+user: 101.325, system: 2.985, elapsed: 104.905
+
+Simulated Annealing, 50 iterations
+
+user: 84.953, system: 1.146, elapsed: 86.556
+
 ## References
 
 -   **Get started with tidymodels and TidyTuesday Palmer penguins**: <https://juliasilge.com/blog/palmer-penguins/>
@@ -337,6 +359,18 @@ Voilààà!
 ### Cohort 1
 
 `r knitr::include_url("https://www.youtube.com/embed/MD0XjJkZkxE")`
+
+## Other helpful videos
+
+### Annealing
+
+Solving Sudoku with Simulated Annealing
+
+`r knitr::include_url("https://www.youtube.com/embed/FyyVbuLZav8")`
+
+From Udacity
+
+`r knitr::include_url("https://www.youtube.com/embed/enNgiWuIHAo")`
 
 <details>
   <summary> Meeting chat log </summary>
@@ -365,7 +399,6 @@ Voilààà!
 00:54:12	Amélie Gourdon-Kanhukamwe (she/they):	Bye!
 ```
 </details>
-
 
 ### Cohort 3
 
